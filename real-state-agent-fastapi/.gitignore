@@ -68,6 +68,7 @@ yarn-error.log*
 *.db
 *.sqlite3
 *.sqlite
+alembic/versions/
 
 # Temporary files
 *.tmp

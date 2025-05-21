@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
 from auth.router import router as auth_router
+from property.router import router as property_router
 
 security_scheme = {
     "BearerAuth": {
@@ -25,6 +26,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(property_router)
 
 @app.get("/")
 def root():

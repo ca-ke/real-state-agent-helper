@@ -1,5 +1,5 @@
 from fastapi import Request, Depends, HTTPException
-from ...core.dependencies import get_supabase_client
+from core.dependencies import get_supabase_client
 
 async def get_user_from_token(
     request: Request,
