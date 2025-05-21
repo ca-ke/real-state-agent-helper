@@ -1,20 +1,20 @@
 from uuid import uuid4
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from property.entities.property_model import PropertyModel
+from sqlalchemy import text, bindparam, Float, Integer
+from property.entities.property_model import PropertyModel, Vector
 from property.schemas.property_create_resquest import PropertyCreateRequest
 from property.entities.property import Property
 from core.model_loader import ModelLoader
-import numpy as np
 
 class PropertyRepository:
     def __init__(self, session: AsyncSession, model_loader: ModelLoader):
         self.session = session
         self.model_loader = model_loader
 
-    async def create(self, data: PropertyCreateRequest, owner_id: str, embedding: list) -> Property:
+    async def create(self, data: PropertyCreateRequest, owner_id: str, embedding: list[float]) -> Property:
         prop_id = str(uuid4())
-        
+
         property_model = PropertyModel(
             id=prop_id,
             title=data.title,
@@ -24,13 +24,13 @@ class PropertyRepository:
             bedrooms=data.bedrooms,
             pet_friendly=data.pet_friendly,
             owner_id=owner_id,
-            embedding=embedding
+            embedding=embedding  
         )
-        
+
         self.session.add(property_model)
         await self.session.commit()
         await self.session.refresh(property_model)
-        
+
         return Property(
             id=property_model.id,
             title=property_model.title,
@@ -43,35 +43,43 @@ class PropertyRepository:
             embedding=property_model.embedding
         )
 
-    async def find_similar(self, search_embedding: list, top_k: int = 5) -> list[Property]:
-        search_embedding_np = np.array(search_embedding)
-        
-        query = select(PropertyModel)
-        result = await self.session.execute(query)
-        properties = result.scalars().all()
-        
-        similarities = []
-        for prop in properties:
-            prop_embedding = np.array(prop.embedding)
-            similarity = np.dot(search_embedding_np, prop_embedding) / (
-                np.linalg.norm(search_embedding_np) * np.linalg.norm(prop_embedding)
+    async def find_similar(self, search_embedding: list[float], top_k: int = 5, threshold: float = 0.7) -> List[Property]:
+        sql = text("""
+            WITH similarity_scores AS (
+                SELECT *,
+                       1 - (embedding <=> :embedding) AS similarity
+                FROM properties
             )
-            similarities.append((prop, similarity))
-        
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        top_properties = [prop for prop, _ in similarities[:top_k]]
-        
+            SELECT *
+            FROM similarity_scores
+            WHERE similarity >= :threshold
+            ORDER BY similarity DESC
+            LIMIT :top_k
+        """).bindparams(
+            bindparam("embedding", type_=Vector),
+            bindparam("threshold", type_=Float),
+            bindparam("top_k", type_=Integer)
+        )
+
+        result = await self.session.execute(sql, {
+            "embedding": search_embedding,
+            "threshold": threshold,
+            "top_k": top_k
+        })
+
+        rows = result.all()
+
         return [
             Property(
-                id=prop.id,
-                title=prop.title,
-                description=prop.description,
-                price=prop.price,
-                location=prop.location,
-                bedrooms=prop.bedrooms,
-                pet_friendly=prop.pet_friendly,
-                owner_id=prop.owner_id,
-                embedding=prop.embedding
+                id=row.id,
+                title=row.title,
+                description=row.description,
+                price=row.price,
+                location=row.location,
+                bedrooms=row.bedrooms,
+                pet_friendly=row.pet_friendly,
+                owner_id=row.owner_id,
+                embedding=row.embedding
             )
-            for prop in top_properties
+            for row in rows
         ]

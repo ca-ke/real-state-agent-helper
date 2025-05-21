@@ -9,11 +9,11 @@ class RegisterPropertyUseCase:
         self.model_loader = model_loader
 
     async def execute(self, data: PropertyCreateRequest, owner_id: str) -> PropertyResponse:
-        pet_str = "aceita pets" if data.pet_friendly else "não aceita pets"
+        pet_str = "pet friendly" if data.pet_friendly else "no pets allowed"
         text_for_embedding = (
             f"{data.title} {data.description}. "
-            f"Preço: R${data.price:.2f}. "
-            f"{data.bedrooms} quartos. "
+            f"Price: ${data.price:.2f}. "
+            f"{data.bedrooms} bedrooms. "
             f"{pet_str}."
         )
         embedding = await self.model_loader.get_embedding(text_for_embedding)

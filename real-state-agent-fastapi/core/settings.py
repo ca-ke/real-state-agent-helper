@@ -6,5 +6,10 @@ class Settings(BaseSettings):
     
     database_url: str
 
+    llm_model: str
+    llm_temperature: float
+    llm_base_url: str
+    llm_api_key: str
+
     class Config:
         env_file = ".env"
