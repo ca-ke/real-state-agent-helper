@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 class Property(BaseModel):
     id: str
@@ -8,4 +9,5 @@ class Property(BaseModel):
     location: str
     bedrooms: int
     pet_friendly: bool
-    owner_id: str 
+    owner_id: str
+    embedding: List[float] | None = None 

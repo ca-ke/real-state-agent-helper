@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Integer, Boolean
+from sqlalchemy import Column, String, Float, Integer, Boolean, ARRAY
 from core.database import Base
 
 class PropertyModel(Base):
@@ -11,4 +11,5 @@ class PropertyModel(Base):
     location = Column(String, nullable=False)
     bedrooms = Column(Integer, nullable=False)
     pet_friendly = Column(Boolean, default=False)
-    owner_id = Column(String, nullable=False) 
+    owner_id = Column(String, nullable=False)
+    embedding = Column(ARRAY(Float), nullable=True) 
