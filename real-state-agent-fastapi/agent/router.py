@@ -5,7 +5,7 @@ from agent.dependencies import get_schedule_call_uc
 
 router = APIRouter()
 
-@router.post("/agent/schedule-call", response_model=CallResponse)
+@router.post("/schedule-call", response_model=CallResponse)
 async def schedule_call(
     body: CallRequest,
     user = Depends(get_user_from_token),
